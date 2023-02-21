@@ -1,0 +1,92 @@
+перенос таблицы
+DROP DATABASE IF EXISTS abc;
+CREATE DATABASE IF NOT EXISTS abc;
+
+DROP TABLE IF EXISTS homework1;
+CREATE TABLE IF NOT EXISTS homework1(
+Id INT NOT NULL AUTO_INCREMENT PRIMARY KEY ,
+Code INT NOT NULL ,
+New BOOLEAN NOT NULL DEFAULT '0',
+Title VARCHAR(100) NOT NULL,
+Price FLOAT(30) NOT NULL DEFAULT'0',
+Edition VARCHAR(100) NOT NULL,
+Pages INT NOT NULL,
+Format VARCHAR(40) DEFAULT 'Nothing',
+Date DATE DEFAULT NULL,
+Circulation INT NOT NULL CHECK(Circulation <= 5000),
+Topic VARCHAR(40) NOT NULL,
+Category VARCHAR(40) NOT NULL
+); 
+LOAD DATA INFILE 'TXT.txt '
+INTO TABLE homework1;
+
+1. Вивести книги у яких не введена ціна або ціна дорівнює 0
+SELECT * FROM homework1 WHERE Price = NULL OR Price = 0;
+
+2. Вивести книги у яких введена ціна, але не введений тираж
+SELECT * FROM homework1 WHERE   Price != NULL AND Circulation = NULL;
+
+3. Вивести книги, про дату видання яких нічого не відомо.
+SELECT * FROM homework1 WHERE Date = '0000-00-00' OR Date = NULL;
+
+4. Вивести книги, з дня видання яких пройшло не більше року.
+SET @Curdata = CURRENT_DATE;
+SET @CurdataPlusDAY = DATE_ADD(@Curdata, INTERVAL 1 DAY);;
+SET @CurdataMinYEAR = DATE_ADD(@Curdata, INTERVAL -1 YEAR);
+SET @CurdataMinYEAR = DATE_ADD(@CurdataMinYEAR, INTERVAL 1 DAY);
+SELECT * FROM homework1 WHERE Date > @CurdataMinYEAR AND Date < @CurdataPlusDAY ;
+
+5. Вивести список книг-новинок, відсортованих за зростанням ціни
+SELECT * FROM homework1 WHERE New = 1 ORDER  BY Price ASC;
+
+6. Вивести список книг з числом сторінок від 300 до 400, відсортованих в зворотному алфавітному порядку назв
+SELECT * FROM homework1 WHERE Pages BETWEEN 300 AND 400 ORDER BY Title DESC;
+
+7. Вивести список книг з ціною від 20 до 40, відсортованих за спаданням дати
+SELECT * FROM homework1 WHERE Price BETWEEN 20 AND 40 ORDER BY Data DESC;
+
+8. Вивести список книг, відсортованих в алфавітному порядку назв і ціною по спадаючій
+SELECT * FROM homework1 ORDER BY Title ASC;
+SELECT * FROM homework1 ORDER BY Price DESC;
+
+9. Вивести книги, у яких ціна однієї сторінки < 10 копійок.
+SELECT * FROM homework1 WHERE ((price / Pages) < 10);
+
+10. Вивести значення наступних колонок: число символів в назві, перші 20 символів назви великими літерами
+SELECT Ucase(LEFT(Title, 20)) AS 'Title', CHAR_LENGTH(Title) AS 'character length' FROM homework1 
+
+11. Вивести значення наступних колонок: перші 10 і останні 10 символів назви прописними буквами, розділені '...'
+SELECT concat(LEFT(Title, 10), "...",RIGHT(Title,10)) AS 'Title' FROM homework1 
+
+12. Вивести значення наступних колонок: назва, дата, день, місяць, рік
+SELECT Title, Date, YEAR(Date) AS 'year', MONTH(Date) AS 'month', DAY(Date) AS 'day' FROM homework1;
+
+13. Вивести значення наступних колонок: назва, дата, дата в форматі 'dd / mm / yyyy'
+SELECT Title, Date, CONCAT(DAY(Date),' / ', MONTH(Date), ' / ',YEAR(Date)) AS 'dd / mm / yyyy' FROM homework1
+
+14. Вивести значення наступних колонок: код, ціна, ціна в грн., ціна в євро, ціна в руб.
+SELECT Code, Price, CONCAT(FORMAT(Price*36.7515, 2, 'de_DE'),'₴') AS 'ціна в грн',CONCAT(FORMAT(Price*0.9394, 2, 'de_DE'),'€') AS 'ціна в євро',CONCAT(FORMAT(Price*74.925, 2, 'de_DE'),'₽') AS 'ціна в руб' FROM homework1
+
+15. Вивести значення наступних колонок: код, ціна, ціна в грн. без копійок, ціна без копійок округлена
+SELECT Code, Price, CONCAT(FORMAT(Price*36.7515, 0, 'de_DE'),'₴') AS 'ціна в грн', CONCAT(ROUND( Price*36.7515, 0),'₴') AS 'Округлена ціна в грн '  FROM homework1
+
+16. Додати інформацію про нову книгу (всі колонки)
+INSERT INTO homework1 (Id, Code, New, Title, Price, Edition, Pages, Format, Date, Circulation, Topic, Category)
+VALUES (88, 13212, 1, 'Java First', 17.40, 'First', 470, '70х100/18', '2022-06-22', 4000, 'Программування' , 'JAVA');
+SELECT * FROM homework1
+
+17. Додати інформацію про нову книгу (колонки обов'язкові для введення)
+INSERT INTO homework1 (Id, Code, New, Title, Price, Edition, Pages, Format, Date, Circulation, Topic, Category)
+VALUES (89, 435345, 0, 'Java second', 12.40, 'First', 270, null, Null, 4000, 'Программування' , 'JAVA');
+SELECT * FROM homework1
+
+18. Видалити книги, видані до 1990 року
+DELETE FROM homework1 WHERE YEAR(Date) < 1990;
+
+19. Проставити поточну дату для тих книг, у яких дата видання відсутня
+UPDATE homework1 SET Date = Case 
+WHEN Date = '0000-00-00' OR Date = NULL
+THEN CURRENT_DATE() ELSE Date END;
+
+20. Установити ознаку новинка для книг виданих після 2005 року
+UPDATE homework1 SET New = Case WHEN YEAR(Date) >= 2005 THEN 1 ELSE 0 END;
