@@ -1,0 +1,83 @@
+перенос таблицы
+DROP DATABASE IF EXISTS abc;
+CREATE DATABASE IF NOT EXISTS abc;
+
+DROP TABLE IF EXISTS homework1;
+CREATE TABLE IF NOT EXISTS homework1(
+Id INT NOT NULL AUTO_INCREMENT PRIMARY KEY ,
+Code INT NOT NULL ,
+New BOOLEAN NOT NULL DEFAULT '0',
+Title VARCHAR(100) NOT NULL,
+Price FLOAT(30) NOT NULL DEFAULT'0',
+Edition VARCHAR(100) NOT NULL,
+Pages INT NOT NULL,
+Format VARCHAR(40) DEFAULT 'Nothing',
+Date DATE DEFAULT NULL,
+Circulation INT NOT NULL CHECK(Circulation <= 5000),
+Topic VARCHAR(40) NOT NULL,
+Category VARCHAR(40) NOT NULL
+); 
+LOAD DATA INFILE 'TXT.txt '
+INTO TABLE homework1;
+
+
+1.	Вивести статистику: загальна кількість всіх книг, їх вартість, їх середню вартість, мінімальну і максимальну ціну
+SELECT COUNT(Id) AS "Book Count", SUM(Price) AS " SUM", AVG(Price) AS "Middle value", MIN(Price) AS "Min price", MAX(Price) AS "Max price"  FROM homework1
+
+2.	Вивести загальну кількість всіх книг без урахування книг з непроставленою ціною
+SELECT COUNT(Id) AS "Кількість всіх книг з проставленою ціною" FROM homework1 WHERE Price is NOT null AND Price != 0
+
+3.	Вивести статистику (див. 1) для книг новинка / не новинка
+SELECT New, COUNT(Id) AS "Book Count", SUM(Price) AS " SUM", AVG(Price) AS "Middle value", MIN(Price) AS "Min price", MAX(Price) AS "Max price"  FROM homework1 GROUP BY New;
+
+4.	Вивести статистику (див. 1) для книг за кожним роком видання
+SELECT Date, COUNT(Id) AS "Book Count", SUM(Price) AS " SUM", AVG(Price) AS "Middle value", MIN(Price) AS "Min price", MAX(Price) AS "Max price"  FROM homework1 GROUP BY YEAR(Date)
+
+5.	Змінити п.4, виключивши з статистики книги з ціною від 10 до 20
+SELECT Date, COUNT(Id) AS "Book Count", SUM(Price) AS " SUM", AVG(Price) AS "Middle value", MIN(Price) AS "Min price", MAX(Price) AS "Max price"  FROM homework1 WHERE Price NOT BETWEEN 10 AND 20 GROUP BY Year(Date);
+
+6.	Змінити п.4. Відсортувати статистику по спадаючій кількості.
+SELECT Date, COUNT(Id) AS "Book Count", SUM(Price) AS " SUM", AVG(Price) AS "Middle value", MIN(Price) AS "Min price", MAX(Price) AS "Max price"  FROM homework1 GROUP BY Year(Date) DESC;
+
+7.	Вивести загальну кількість кодів книг і кодів книг що не повторюються
+SELECT COUNT(Code) AS "Кол-во с повторением", COUNT(DISTINCT(Code)) as "кол-во без повторения " FROM homework1 
+
+8.	Вивести статистику: загальна кількість і вартість книг по першій букві її назви
+SELECT LEFT(Title,1), COUNT(Id) AS "Book Count", SUM(Price) AS " SUM" FROM homework1 GROUP BY LEFT(Title,1);
+
+9.	Змінити п. 8, виключивши з статистики назви що починаються з англ. букви або з цифри.
+SELECT LEFT(Title,1), COUNT(Id) AS "Book Count", SUM(Price) AS " SUM" FROM homework1 WHERE Title REGEXP '^[^0-9A-Za-z]'  GROUP BY LEFT(Title,1);
+
+10.	Змінити п. 9 так щоб до складу статистики потрапили дані з роками більшими за 2000.
+SSELECT LEFT(Title,1), COUNT(Id) AS "Book Count", SUM(Price) AS " SUM" FROM homework1 WHERE Title REGEXP '^[^0-9A-Za-z]' AND YEAR(Date) > 2000  GROUP BY LEFT(Title,1);
+
+
+11.	Змінити п. 10. Відсортувати статистику по спадаючій перших букв назви.
+SELECT LEFT(Title,1), COUNT(Id) AS "Book Count", SUM(Price) AS " SUM" FROM homework1 WHERE Title REGEXP '^[^0-9A-Za-z]'  GROUP BY LEFT(Title,1) DESC;
+
+12.	Вивести статистику (див. 1) по кожному місяцю кожного року.
+SELECT Date, COUNT(Id) AS "Book Count", SUM(Price) AS " SUM", AVG(Price) AS "Middle value", MIN(Price) AS "Min price", MAX(Price) AS "Max price"  FROM homework1 GROUP BY YEAR(Date), month(Date);
+
+13.	Змінити п. 12 так щоб до складу статистики не увійшли дані з незаповненими датами.
+SELECT Date, COUNT(Id) AS "Book Count", SUM(Price) AS " SUM", AVG(Price) AS "Middle value", MIN(Price) AS "Min price", MAX(Price) AS "Max price"  FROM homework1 WHERE Date != "0000-00-00" AND Date IS NOT NULL GROUP BY YEAR(Date), month(Date);
+
+14.	Змінити п. 12. Фільтр по спадаючій року і зростанню місяця.
+SELECT Date, COUNT(Id) AS "Book Count", SUM(Price) AS " SUM", AVG(Price) AS "Middle value", MIN(Price) AS "Min price", MAX(Price) AS "Max price"  FROM homework1 GROUP BY  YEAR(Date) DESC, month(Date) ASC;
+
+15.	Вивести статистику для книг новинка / не новинка: загальна ціна, загальна ціна в грн. / Євро / руб. Колонкам запиту дати назви за змістом.
+SELECT SUM(Price) AS "загальна ціна", CONCAT(SUM(FORMAT(Price*36.7515, 2, 'de_DE')),'₴') AS 'загальна ціна в грн',CONCAT(SUM(FORMAT(Price*0.9394, 2, 'de_DE')),'€') AS 'загальна ціна в євро',CONCAT(SUM(FORMAT(Price*74.925, 2, 'de_DE')),'₽') AS 'загальна ціна в руб' FROM homework1 GROUP BY New
+
+16.	Змінити п. 15 так щоб виводилася округлена до цілого числа (дол. / Грн. / Євро / руб.) Ціна.
+SELECT ROUND(SUM(Price)) AS "загальна ціна", CONCAT(SUM((ROUND(Price*36.7515))),'₴') AS 'загальна ціна в грн',CONCAT(SUM((ROUND(Price*0.9394))),'€') AS 'загальна ціна в євро',CONCAT(SUM((ROUND(Price*74.925))),'₽') AS 'загальна ціна в руб' FROM homework1 GROUP BY New
+
+17.	Вивести статистику (див. 1) по видавництвах.
+SELECT Edition, COUNT(Id) AS "Book Count", SUM(Price) AS " SUM", AVG(Price) AS "Middle value", MIN(Price) AS "Min price", MAX(Price) AS "Max price"  FROM homework1 GROUP by Edition
+
+18.	Вивести статистику (див. 1) за темами і видавництвами. Фільтр по видавництвам.
+SELECT Edition, Topic, COUNT(Id) AS "Book Count", SUM(Price) AS " SUM", AVG(Price) AS "Middle value", MIN(Price) AS "Min price", MAX(Price) AS "Max price"  FROM homework1 GROUP by Edition , Topic
+
+19.	Вивести статистику (див. 1) за категоріями, темами і видавництвами. Фільтр по видавництвам, темах, категоріям.
+SELECT Edition, Topic, Category, COUNT(Id) AS "Book Count", SUM(Price) AS " SUM", AVG(Price) AS "Middle value", MIN(Price) AS "Min price", MAX(Price) AS "Max price"  FROM homework1 GROUP by Edition , Topic, Category
+
+20.	Вивести список видавництв, у яких округлена до цілого ціна однієї сторінки більше 10 копійок.
+ 
