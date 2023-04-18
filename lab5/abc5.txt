@@ -17,9 +17,9 @@ Circulation INT NOT NULL CHECK(Circulation <= 5000),
 Topic_id INT NOT NULL,
 Category_Id INT NOT NULL
 ); 
-ALTER TABLE homework1 ADD CONSTRAINT Category_Id FOREIGN KEY (Category_Id) REFERENCES category (Category_Id),
-ADD CONSTRAINT Edition_id  FOREIGN KEY (Edition_id) REFERENCES edition (Edition_id),
-ADD CONSTRAINT Topic_id  FOREIGN KEY (Topic_id) REFERENCES topic (Topic_id); 
+ALTER TABLE homework1 ADD CONSTRAINT Category_Id FOREIGN KEY (Category_Id) REFERENCES category (CategoryId),
+ADD CONSTRAINT Edition_id  FOREIGN KEY (Edition_id) REFERENCES edition (Editionid),
+ADD CONSTRAINT Topic_id  FOREIGN KEY (Topic_id) REFERENCES topic (Topicid); 
 
 
 LOAD DATA INFILE 'TXT.txt '
@@ -37,19 +37,19 @@ a.	Створення таблиць бази даних. Команди для 
 
 DROP TABLE IF EXISTS Edition;
 CREATE TABLE IF NOT EXISTS Edition(
-Edition_Id INT NOT NULL AUTO_INCREMENT PRIMARY KEY ,
+EditionId INT NOT NULL AUTO_INCREMENT PRIMARY KEY ,
 Edition_Name VARCHAR(100) NOT NULL );
 CREATE UNIQUE INDEX EditionIndx ON Edition(Edition_Name);    
 
 DROP TABLE IF EXISTS Topic;
 CREATE TABLE IF NOT EXISTS Topic(
-Topic_Id INT NOT NULL AUTO_INCREMENT PRIMARY KEY ,
+TopicId INT NOT NULL AUTO_INCREMENT PRIMARY KEY ,
 Topic_Name VARCHAR(40) NOT NULL );
 CREATE UNIQUE INDEX TopicIndx ON Topic(Topic_Name);  
 
 DROP TABLE IF EXISTS Category;
 CREATE TABLE IF NOT EXISTS Category(
-Category_Id INT NOT NULL AUTO_INCREMENT PRIMARY KEY ,
+CategoryId INT NOT NULL AUTO_INCREMENT PRIMARY KEY ,
 Category_Name VARCHAR(40) NOT NULL );
 CREATE UNIQUE INDEX CategoryIndx ON Category(Category_Name);  
 
@@ -65,3 +65,9 @@ d.	Порівняти з тими, що написані самостійно.
 e.	Зробити висновки 
 
 5.	 Створити і перевірити представлення для отримання універсального відношення з набору нормалізованих таблиць бази даних.
+DROP VIEW IF EXISTS viev_name;
+CREATE VIEW IF NOT EXISTS viev_name AS
+SELECT DISTINCT Id, Code, New, Title, Price, Edition_id, Pages, Format, Data, Circulation, Topic_Id, Category_Id FROM homework1
+JOIN category ON category.CategoryId = homework1.Category_Id
+JOIN edition ON edition.EditionId = homework1.Edition_id
+JOIN topic ON topic.TopicId = homework1.Topic_id
