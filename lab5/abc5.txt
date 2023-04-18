@@ -1,0 +1,67 @@
+DROP DATABASE IF EXISTS abc;
+CREATE DATABASE IF NOT EXISTS abc;
+
+DROP TABLE IF EXISTS homework1;
+CREATE TABLE IF NOT EXISTS homework1(
+
+Id INT NOT NULL AUTO_INCREMENT PRIMARY KEY ,
+Code INT NOT NULL references code(code_name),
+New BOOLEAN NOT NULL DEFAULT '0',
+Title VARCHAR(100) NOT NULL,
+Price FLOAT(30) NOT NULL DEFAULT'0',
+Edition_id INT NOT NULL,
+Pages INT NOT NULL,
+Format VARCHAR(40) DEFAULT 'Nothing',
+Data DATE DEFAULT NULL,
+Circulation INT NOT NULL CHECK(Circulation <= 5000),
+Topic_id INT NOT NULL,
+Category_Id INT NOT NULL
+); 
+ALTER TABLE homework1 ADD CONSTRAINT Category_Id FOREIGN KEY (Category_Id) REFERENCES category (Category_Id),
+ADD CONSTRAINT Edition_id  FOREIGN KEY (Edition_id) REFERENCES edition (Edition_id),
+ADD CONSTRAINT Topic_id  FOREIGN KEY (Topic_id) REFERENCES topic (Topic_id); 
+
+
+LOAD DATA INFILE 'TXT.txt '
+INTO TABLE homework1;
+
+
+1.	Проаналізувати приклад універсального відношення. З'ясувати які його колонки містять надлишкові дані. Виконати нормалізацію універсального відношення, розбивши його на кілька таблиць.  
+	перенос таблицы
+	Колонки містять надлишкові дані.
+	Code New Title Price Edition Pages Format Date Circulation Topic Category
+	
+	
+2.	Скласти SQL-script, що виконує:
+a.	Створення таблиць бази даних. Команди для створення таблиці повинні містити головний ключ, обмеження типу null / not null, default, check, створення зв'язків з умовами посилальної цілісності
+
+DROP TABLE IF EXISTS Edition;
+CREATE TABLE IF NOT EXISTS Edition(
+Edition_Id INT NOT NULL AUTO_INCREMENT PRIMARY KEY ,
+Edition_Name VARCHAR(100) NOT NULL );
+CREATE UNIQUE INDEX EditionIndx ON Edition(Edition_Name);    
+
+DROP TABLE IF EXISTS Topic;
+CREATE TABLE IF NOT EXISTS Topic(
+Topic_Id INT NOT NULL AUTO_INCREMENT PRIMARY KEY ,
+Topic_Name VARCHAR(40) NOT NULL );
+CREATE UNIQUE INDEX TopicIndx ON Topic(Topic_Name);  
+
+DROP TABLE IF EXISTS Category;
+CREATE TABLE IF NOT EXISTS Category(
+Category_Id INT NOT NULL AUTO_INCREMENT PRIMARY KEY ,
+Category_Name VARCHAR(40) NOT NULL );
+CREATE UNIQUE INDEX CategoryIndx ON Category(Category_Name);  
+
+b.	Завантаження даних в таблиці
+
+3.	Побудувати діаграму зв'язків таблиць бази даних використовуючи інструмент Designer. 
+
+4.	Створити зв’язки в базі даних між таблицями. 
+a.	Вивчити роботу створення зв’язків між таблицями в полі Designer
+b.	Створити майстром e Designer кілька варіантів зв’язків у базі даних
+c.	Проаналізувати і пояснити особливості зв’язків, створених Designer
+d.	Порівняти з тими, що написані самостійно.
+e.	Зробити висновки 
+
+5.	 Створити і перевірити представлення для отримання універсального відношення з набору нормалізованих таблиць бази даних.
