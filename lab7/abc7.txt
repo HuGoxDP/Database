@@ -1,0 +1,151 @@
+SET FOREIGN_KEY_CHECKS=0;
+SET GLOBAL FOREIGN_KEY_CHECKS=0;
+
+DROP DATABASE IF EXISTS abc;
+CREATE DATABASE IF NOT EXISTS abc;
+
+
+DROP TABLE IF EXISTS homework1;
+CREATE TABLE IF NOT EXISTS homework1(
+
+Id INT NOT NULL AUTO_INCREMENT PRIMARY KEY ,
+Code INT NOT NULL references code(code_name),
+New BOOLEAN NOT NULL DEFAULT '0',
+Title VARCHAR(100) NOT NULL,
+Price FLOAT(30) NOT NULL DEFAULT'0',
+Edition_id INT NOT NULL,
+Pages INT NOT NULL,
+Format VARCHAR(40) DEFAULT 'Nothing',
+Data DATE DEFAULT NULL,
+Circulation INT NOT NULL CHECK(Circulation <= 5000),
+Topic_id INT NOT NULL,
+Category_Id INT NOT NULL
+); 
+ALTER TABLE homework1 ADD CONSTRAINT Category_Id FOREIGN KEY (Category_Id) REFERENCES category (CategoryId),
+ADD CONSTRAINT Edition_id  FOREIGN KEY (Edition_id) REFERENCES edition (EditionId),
+ADD CONSTRAINT Topic_id  FOREIGN KEY (Topic_id) REFERENCES topic (TopicId); 
+
+LOAD DATA INFILE 'TXT.txt '
+INTO TABLE homework1;
+
+DROP TABLE IF EXISTS Edition;
+CREATE TABLE IF NOT EXISTS Edition(
+EditionId INT NOT NULL AUTO_INCREMENT PRIMARY KEY ,
+Edition_Name VARCHAR(100) NOT NULL );
+CREATE UNIQUE INDEX EditionIndx ON Edition(Edition_Name); 
+LOAD DATA INFILE 'edition.txt '
+INTO TABLE edition;   
+
+DROP TABLE IF EXISTS Topic;
+CREATE TABLE IF NOT EXISTS Topic(
+TopicId INT NOT NULL AUTO_INCREMENT PRIMARY KEY ,
+Topic_Name VARCHAR(40) NOT NULL );
+CREATE UNIQUE INDEX TopicIndx ON Topic(Topic_Name);  
+LOAD DATA INFILE 'Topic.txt '
+INTO TABLE Topic;
+
+DROP TABLE IF EXISTS Category;
+CREATE TABLE IF NOT EXISTS Category(
+CategoryId INT NOT NULL AUTO_INCREMENT PRIMARY KEY ,
+Category_Name VARCHAR(40) NOT NULL );
+CREATE UNIQUE INDEX CategoryIndx ON Category(Category_Name);  
+LOAD DATA INFILE 'Category.txt '
+INTO TABLE Category;
+
+DROP VIEW IF EXISTS viev_name;
+CREATE VIEW IF NOT EXISTS viev_name AS
+SELECT DISTINCT Id, Code, New, Title, Price, Edition_id, Pages, Format, Data, Circulation, Topic_Id, Category_Id FROM homework1
+JOIN category ON category.CategoryId = homework1.Category_Id
+JOIN edition ON edition.EditionId = homework1.Edition_id
+JOIN topic ON topic.TopicId = homework1.Topic_id
+
+1.	Вивести значення наступних колонок: назва книги, ціна, назва видавництва, формат.
+CREATE PROCEDURE IF NOT EXISTS SelectBooks ()
+SELECT homework1.Title, homework1.Price, edition.Edition_Name, homework1.Format FROM homework1, edition WHERE homework1.Edition_id = edition.EditionId;
+CALL SelectBooks()
+
+2.	Вивести значення наступних колонок: тема, категорія, назва книги, назва видавництва. Фільтр по темам і категоріям.
+CREATE PROCEDURE IF NOT EXISTS SelectBooks2 ()
+SELECT topic.Topic_Name, category.Category_Name, homework1.Title, edition.Edition_Name FROM homework1, edition, topic, category WHERE homework1.Edition_id = edition.EditionId and homework1.Category_Id = category.CategoryId AND homework1.Topic_id = topic.TopicId GROUP BY topic.Topic_Name, category.Category_Name
+CALL SelectBooks2()
+
+3.	Вивести книги видавництва 'BHV', видані після 2000 р
+CREATE PROCEDURE IF NOT EXISTS SelectBooks3 () 
+SELECT homework1.* FROM homework1 JOIN edition WHERE homework1.Edition_id = edition.EditionId AND edition.Edition_Name LIKE"%BHV%" AND YEAR(DATA) > 2000;
+CALL SelectBooks3()
+
+4.	Вивести загальну кількість сторінок по кожній назві категорії. Фільтр по спадаючій / зростанню кількості сторінок.
+CREATE PROCEDURE IF NOT EXISTS SelectBooks4Desc() 
+SELECT homework1.Pages, category.Category_Name FROM homework1 RIGHT JOIN category ON homework1.Category_Id = category.CategoryId GROUP BY Category.Category_Name ORDER BY homework1.Pages DESC;
+CALL SelectBooks4Desc
+
+CREATE PROCEDURE IF NOT EXISTS SelectBooks4asc() 
+SELECT homework1.Pages, category.Category_Name FROM homework1 RIGHT JOIN category ON homework1.Category_Id = category.CategoryId GROUP BY Category.Category_Name ORDER BY homework1.Pages ASC;
+CALL SelectBooks4asc
+
+5.	Вивести середню вартість книг по темі 'Використання ПК' і категорії 'Linux'.
+CREATE PROCEDURE IF NOT EXISTS SelectBooks5() 
+SELECT AVG(homework1.Price), category.Category_Name, topic.Topic_Name FROM homework1 JOIN category INNER JOIN topic WHERE homework1.Category_Id = category.CategoryId AND homework1.Topic_id = topic.TopicId AND topic.Topic_Name LIKE "%Використання ПК%" AND category.Category_Name LIKE"%Linux%" ;
+CALL SelectBooks5
+
+6.	Вивести всі дані універсального відношення.
+CREATE PROCEDURE IF NOT EXISTS SelectBooks6() 
+SELECT homework1.Id,homework1.Code,homework1.New,homework1.Title,homework1.Price,edition.Edition_Name,homework1.Pages,homework1.Format,homework1.Data,homework1.Circulation, topic.Topic_Name, category.Category_Name
+FROM homework1 INNER JOIN edition, category, topic
+where homework1.Edition_id = edition.EditionId and homework1.Category_Id = category.CategoryId AND homework1.Topic_id = topic.TopicId;
+CALL SelectBooks6
+
+7.	Вивести пари книг, що мають однакову кількість сторінок.
+CREATE PROCEDURE IF NOT EXISTS SelectBooks7() 
+SELECT F.Title AS first_book, S.Title AS second_book from homework1 F, homework1 S WHERE
+F.Pages = S.Pages GROUP BY F.Title, S.Title;
+CALL SelectBooks7 
+
+8.	Вивести тріади книг, що мають однакову ціну.
+CREATE PROCEDURE IF NOT EXISTS SelectBooks8() 
+SELECT F.Title AS first_book, S.Title AS second_book, T.Title AS third_book from homework1 F, homework1 S, homework1 T WHERE F.Price = S.Price AND F.Price = T.Price AND S.Price = T.Price GROUP BY F.Title, S.Title, T.Title;
+CALL SelectBooks8
+
+9.	Вивести всі книги категорії 'C ++'.
+CREATE PROCEDURE IF NOT EXISTS SelectBooks9() 
+SELECT Title FROM homework1 WHERE Category_Id = (SELECT CategoryId FROM category WHERE Category_Name LIKE "%C++%");
+CALL SelectBooks9
+
+10.	Вивести список видавництв, у яких розмір книг перевищує 400 сторінок.
+CREATE PROCEDURE IF NOT EXISTS SelectBooks10() 
+SELECT Edition_Name FROM edition WHERE edition.EditionId IN (SELECT Edition_id FROM homework1 WHERE Pages > 400) ;
+CALL SelectBooks10
+
+11.	Вивести список категорій за якими більше 3-х книг.
+CREATE PROCEDURE IF NOT EXISTS SelectBooks11() 
+SELECT Category_Name FROM category WHERE category.CategoryId IN (SELECT Category_Id FROM homework1  GROUP by Category_Id HAVING COUNT(title) > 3 ) ;
+CALL SelectBooks11
+
+12.	Вивести список книг видавництва 'BHV', якщо в списку є хоча б одна книга цього видавництва.
+CREATE PROCEDURE IF NOT EXISTS SelectBooks12() 
+SELECT Title FROM homework1 WHERE EXISTS (SELECT Edition_Name FROM edition WHERE homework1.Edition_id = edition.EditionId and Edition_Name LIKE "%BHV%");
+CALL SelectBooks12
+
+13.	Вивести список книг видавництва 'BHV', якщо в списку немає жодної книги цього видавництва.
+CREATE PROCEDURE IF NOT EXISTS SelectBooks13() 
+SELECT Title FROM homework1 WHERE NOT EXISTS (SELECT Edition_Name FROM edition WHERE homework1.Edition_id = edition.EditionId and Edition_Name LIKE "%BHV%");
+CALL SelectBooks13
+
+14.	Вивести відсортоване загальний список назв тем і категорій.
+CREATE PROCEDURE IF NOT EXISTS SelectBooks14() 
+SELECT category.Category_Name FROM category UNION SELECT topic.Topic_Name FROM topic;
+CALL SelectBooks14
+
+15.	Вивести відсортований в зворотному порядку загальний список перших слів назв книг і категорій що не повторюються
+CREATE PROCEDURE IF NOT EXISTS SelectBooks15() 
+SELECT DISTINCT SUBSTRING_INDEX(category.Category_Name, " ", 1) AS categoryF  FROM category UNION SELECT DISTINCT SUBSTRING_INDEX( homework1.Title, " ", 1) FROM homework1 ORDER by categoryF DESC;
+CALL SelectBooks15
+ 
+
+
+
+
+
+
+
+
